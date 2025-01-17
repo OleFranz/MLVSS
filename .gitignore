@@ -1,5 +1,12 @@
 # Ignore the pycache
 **/__pycache__
 
+# Ignore the Visual Studio Code files
+/.vscode/*
+!.vscode/c_cpp_properties.json
+
+# Ignore the C++ builds
+/C++/build
+
 # Ignore the datasets
 /Mapping/Datasets
