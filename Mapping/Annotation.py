@@ -40,7 +40,7 @@ print("Caching Images...")
 
 Images = []
 for File in os.listdir(DATA_PATH):
-    if (File.endswith(".png") or File.endswith(".jpg") or File.endswith(".jpeg")) and os.path.exists(f"{DST_PATH}{File.replace(File.split('.')[-1], 'txt')}") == False:
+    if (File.endswith(".png") or File.endswith(".jpg") or File.endswith(".jpeg")) and os.path.exists(f"{DST_PATH}{File.replace('.png', '#SOURCE.png').replace('.jpg', '#SOURCE.jpg').replace('.jpeg', '#SOURCE.jpeg')}") == False:
         Image = cv2.imread(f"{DATA_PATH}{File}", cv2.IMREAD_UNCHANGED)
         Images.append((Image, File))
 

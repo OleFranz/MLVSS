@@ -10,3 +10,6 @@
 
 # Ignore the datasets
 /Mapping/Datasets
+
+# Ignore the training logs
+/Tensorboard
