@@ -29,13 +29,14 @@ MODEL_PATH = PATH + "\\Mapping\\Models"
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 NUM_EPOCHS = 200
 BATCH_SIZE = 32
-IMG_WIDTH = 100
-IMG_HEIGHT =  48
-LEARNING_RATE = 0.0001
+IMG_WIDTH = 256
+IMG_HEIGHT = 48
+IMG_CHANNELS = ['Grayscale', 'Binarize', 'RGB', 'RG', 'GB', 'RB', 'R', 'G', 'B'][2]
+LEARNING_RATE = 0.001
 MAX_LEARNING_RATE = 0.001
 TRAIN_VAL_RATIO = 1
 NUM_WORKERS = 0
-DROPOUT = 0.2
+DROPOUT = 0.1
 PATIENCE = 50
 SHUFFLE = True
 PIN_MEMORY = False
@@ -49,6 +50,11 @@ for file in os.listdir(DATA_PATH):
 if IMG_COUNT == 0:
     print("No images found, exiting...")
     exit()
+
+if IMG_CHANNELS == 'Grayscale' or IMG_CHANNELS == 'Binarize':
+    COLOR_CHANNELS = 1
+else:
+    COLOR_CHANNELS = len(IMG_CHANNELS)
 
 RED = "\033[91m"
 GREEN = "\033[92m"
@@ -68,6 +74,8 @@ print(timestamp() + "> Batch size:", BATCH_SIZE)
 print(timestamp() + "> Images:", IMG_COUNT)
 print(timestamp() + "> Image width:", IMG_WIDTH)
 print(timestamp() + "> Image height:", IMG_HEIGHT)
+print(timestamp() + "> Image channels:", IMG_CHANNELS)
+print(timestamp() + "> Color channels:", COLOR_CHANNELS)
 print(timestamp() + "> Learning rate:", LEARNING_RATE)
 print(timestamp() + "> Max learning rate:", MAX_LEARNING_RATE)
 print(timestamp() + "> Dataset split:", TRAIN_VAL_RATIO)
@@ -92,15 +100,34 @@ if CACHE:
         print(f"\r{timestamp()}Caching {type} dataset...           ", end='', flush=True)
         for file in os.listdir(DATA_PATH):
             if file in files:
-                source_img = cv2.imread(os.path.join(DATA_PATH, file), cv2.IMREAD_UNCHANGED)
-                if len(source_img.shape) == 3:
-                    source_img = cv2.cvtColor(source_img, cv2.COLOR_BGR2GRAY)
+                if IMG_CHANNELS== 'Grayscale' or IMG_CHANNELS == 'Binarize':
+                    source_img = Image.open(os.path.join(DATA_PATH, file)).convert('L')
+                    source_img = np.array(source_img)
+                else:
+                    source_img = Image.open(os.path.join(DATA_PATH, file))
+                    source_img = np.array(source_img)
+
+                    if IMG_CHANNELS == 'RG':
+                        source_img = np.stack((source_img[:, :, 0], source_img[:, :, 1]), axis=2)
+                    elif IMG_CHANNELS == 'GB':
+                        source_img = np.stack((source_img[:, :, 1], source_img[:, :, 2]), axis=2)
+                    elif IMG_CHANNELS == 'RB':
+                        source_img = np.stack((source_img[:, :, 0], source_img[:, :, 2]), axis=2)
+                    elif IMG_CHANNELS == 'R':
+                        source_img = source_img[:, :, 0]
+                        source_img = np.expand_dims(source_img, axis=2)
+                    elif IMG_CHANNELS == 'G':
+                        source_img = source_img[:, :, 1]
+                        source_img = np.expand_dims(source_img, axis=2)
+                    elif IMG_CHANNELS == 'B':
+                        source_img = source_img[:, :, 2]
+                        source_img = np.expand_dims(source_img, axis=2)
+
                 source_img = cv2.resize(source_img, (IMG_WIDTH, IMG_HEIGHT))
                 source_img = source_img / 255.0
 
-                label_image = cv2.imread(os.path.join(DATA_PATH, file.replace("#SOURCE", "#LABEL")), cv2.IMREAD_UNCHANGED)
-                if len(label_image.shape) == 3:
-                    label_image = cv2.cvtColor(label_image, cv2.COLOR_BGR2GRAY)
+                label_image = Image.open(os.path.join(DATA_PATH, file.replace("#SOURCE", "#LABEL"))).convert('L')
+                label_image = np.array(label_image)
                 label_image = cv2.resize(label_image, (IMG_WIDTH, IMG_HEIGHT))
                 label_image = label_image / 255.0
 
@@ -147,15 +174,34 @@ else:
         def __getitem__(self, index):
             file = self.files[index]
 
-            source_img = cv2.imread(os.path.join(DATA_PATH, file), cv2.IMREAD_UNCHANGED)
-            if len(source_img.shape) == 3:
-                source_img = cv2.cvtColor(source_img, cv2.COLOR_BGR2GRAY)
+            if IMG_CHANNELS== 'Grayscale' or IMG_CHANNELS == 'Binarize':
+                source_img = Image.open(os.path.join(DATA_PATH, file)).convert('L')
+                source_img = np.array(source_img)
+            else:
+                source_img = Image.open(os.path.join(DATA_PATH, file))
+                source_img = np.array(source_img)
+
+                if IMG_CHANNELS == 'RG':
+                    source_img = np.stack((source_img[:, :, 0], source_img[:, :, 1]), axis=2)
+                elif IMG_CHANNELS == 'GB':
+                    source_img = np.stack((source_img[:, :, 1], source_img[:, :, 2]), axis=2)
+                elif IMG_CHANNELS == 'RB':
+                    source_img = np.stack((source_img[:, :, 0], source_img[:, :, 2]), axis=2)
+                elif IMG_CHANNELS == 'R':
+                    source_img = source_img[:, :, 0]
+                    source_img = np.expand_dims(source_img, axis=2)
+                elif IMG_CHANNELS == 'G':
+                    source_img = source_img[:, :, 1]
+                    source_img = np.expand_dims(source_img, axis=2)
+                elif IMG_CHANNELS == 'B':
+                    source_img = source_img[:, :, 2]
+                    source_img = np.expand_dims(source_img, axis=2)
+
             source_img = cv2.resize(source_img, (IMG_WIDTH, IMG_HEIGHT))
             source_img = source_img / 255.0
 
-            label_image = cv2.imread(os.path.join(DATA_PATH, file.replace("#SOURCE", "#LABEL")), cv2.IMREAD_UNCHANGED)
-            if len(label_image.shape) == 3:
-                label_image = cv2.cvtColor(label_image, cv2.COLOR_BGR2GRAY)
+            label_image = Image.open(os.path.join(DATA_PATH, file.replace("#SOURCE", "#LABEL"))).convert('L')
+            label_image = np.array(label_image)
             label_image = cv2.resize(label_image, (IMG_WIDTH, IMG_HEIGHT))
             label_image = label_image / 255.0
 
@@ -175,47 +221,94 @@ else:
 class NeuralNetwork(nn.Module):
     def __init__(self):
         super(NeuralNetwork, self).__init__()
-        # Encoder
-        self.conv1 = nn.Conv2d(1, 128, 3, padding=1)
-        self.conv3 = nn.Conv2d(128, 256, 3, padding=1)
-        self.pool1 = nn.MaxPool2d(2, 2)
 
-        self.conv5 = nn.Conv2d(256, 512, 3, padding=1)
-        self.conv7 = nn.Conv2d(512, 512, 3, padding=1)
-        self.pool2 = nn.MaxPool2d(2, 2)
+        # Encoder
+        self.e11 = nn.Conv2d(COLOR_CHANNELS, 64, kernel_size=3, padding=1)
+        self.e12 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        self.e21 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.e22 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
+        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        self.e31 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
+        self.e32 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+        self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        self.e41 = nn.Conv2d(256, 512, kernel_size=3, padding=1)
+        self.e42 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.pool4 = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        self.e51 = nn.Conv2d(512, 1024, kernel_size=3, padding=1)
+        self.e52 = nn.Conv2d(1024, 1024, kernel_size=3, padding=1)
+
 
         # Decoder
-        self.conv9 = nn.Conv2d(512, 256, 3, padding=1)
-        self.conv11 = nn.Conv2d(256, 128, 3, padding=1)
-        self.up1 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+        self.upconv1 = nn.ConvTranspose2d(1024, 512, kernel_size=2, stride=2)
+        self.d11 = nn.Conv2d(1024, 512, kernel_size=3, padding=1)
+        self.d12 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
 
-        self.conv13 = nn.Conv2d(128, 64, 3, padding=1)
-        self.conv15 = nn.Conv2d(64, 1, 3, padding=1)
-        self.up2 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+        self.upconv2 = nn.ConvTranspose2d(512, 256, kernel_size=2, stride=2)
+        self.d21 = nn.Conv2d(512, 256, kernel_size=3, padding=1)
+        self.d22 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
 
-        self.activation = nn.Sigmoid()
+        self.upconv3 = nn.ConvTranspose2d(256, 128, kernel_size=2, stride=2)
+        self.d31 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
+        self.d32 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
+
+        self.upconv4 = nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2)
+        self.d41 = nn.Conv2d(128, 64, kernel_size=3, padding=1)
+        self.d42 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+
+        self.outconv = nn.Conv2d(64, 1, kernel_size=1)
+
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         # Encoder
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv3(x))
-        x = self.pool1(x)
+        xe11 = F.relu(self.e11(x))
+        xe12 = F.relu(self.e12(xe11))
+        xp1 = self.pool1(xe12)
 
-        x = F.relu(self.conv5(x))
-        x = F.relu(self.conv7(x))
-        x = self.pool2(x)
+        xe21 = F.relu(self.e21(xp1))
+        xe22 = F.relu(self.e22(xe21))
+        xp2 = self.pool2(xe22)
 
+        xe31 = F.relu(self.e31(xp2))
+        xe32 = F.relu(self.e32(xe31))
+        xp3 = self.pool3(xe32)
+
+        xe41 = F.relu(self.e41(xp3))
+        xe42 = F.relu(self.e42(xe41))
+        xp4 = self.pool4(xe42)
+
+        xe51 = F.relu(self.e51(xp4))
+        xe52 = F.relu(self.e52(xe51))
+        
         # Decoder
-        x = F.relu(self.conv9(x))
-        x = F.relu(self.conv11(x))
-        x = self.up1(x)
+        xu1 = self.upconv1(xe52)
+        xu11 = torch.cat([xu1, xe42], dim=1)
+        xd11 = F.relu(self.d11(xu11))
+        xd12 = F.relu(self.d12(xd11))
 
-        x = F.relu(self.conv13(x))
-        x = self.conv15(x)
-        x = self.up2(x)
+        xu2 = self.upconv2(xd12)
+        xu22 = torch.cat([xu2, xe32], dim=1)
+        xd21 = F.relu(self.d21(xu22))
+        xd22 = F.relu(self.d22(xd21))
 
-        x = self.activation(x)
-        return x
+        xu3 = self.upconv3(xd22)
+        xu33 = torch.cat([xu3, xe22], dim=1)
+        xd31 = F.relu(self.d31(xu33))
+        xd32 = F.relu(self.d32(xd31))
+
+        xu4 = self.upconv4(xd32)
+        xu44 = torch.cat([xu4, xe12], dim=1)
+        xd41 = F.relu(self.d41(xu44))
+        xd42 = F.relu(self.d42(xd41))
+
+        out = self.outconv(xd42)
+
+        return self.sigmoid(out)
 
 def get_text_size(text="NONE", text_width=100, max_text_height=100):
     fontscale = 1
@@ -242,7 +335,11 @@ def generate_tensorboard_image(model, dataset, resolution):
     with torch.no_grad():
         prediction = model(image.unsqueeze(0).to(DEVICE))
 
-    frame = cv2.resize(cv2.cvtColor(image.permute(1, 2, 0).numpy(), cv2.COLOR_GRAY2BGRA), (resolution, resolution))
+    frame = cv2.resize(image.permute(1, 2, 0).numpy(), (resolution, resolution))
+    if frame.shape[2] == 1:
+        cv2.cvtColor(frame, cv2.COLOR_GRAY2BGRA)
+    elif frame.shape[2] == 3:
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGRA)
 
     for i, label_img in enumerate(label):
         label_img = cv2.resize(cv2.cvtColor(label_img.numpy(), cv2.COLOR_GRAY2BGRA), (resolution, resolution))
@@ -542,6 +639,8 @@ def main():
                 f"image_count#{IMG_COUNT}",
                 f"image_width#{IMG_WIDTH}",
                 f"image_height#{IMG_HEIGHT}",
+                f"image_channels#{IMG_CHANNELS}",
+                f"color_channels#{COLOR_CHANNELS}",
                 f"learning_rate#{LEARNING_RATE}",
                 f"max_learning_rate#{MAX_LEARNING_RATE}",
                 f"dataset_split#{TRAIN_VAL_RATIO}",
@@ -575,7 +674,7 @@ def main():
     for i in range(5):
         try:
             last_model = torch.jit.script(model)
-            torch.jit.save(last_model, os.path.join(MODEL_PATH, f"ImageMask-LAST-{TRAINING_DATE}.pt"), _extra_files=metadata)
+            torch.jit.save(last_model, os.path.join(MODEL_PATH, f"Mapping-LAST-{TRAINING_DATE}.pt"), _extra_files=metadata)
             last_model_saved = True
             break
         except:
@@ -622,6 +721,8 @@ def main():
                 f"image_count#{IMG_COUNT}",
                 f"image_width#{IMG_WIDTH}",
                 f"image_height#{IMG_HEIGHT}",
+                f"image_channels#{IMG_CHANNELS}",
+                f"color_channels#{COLOR_CHANNELS}",
                 f"learning_rate#{LEARNING_RATE}",
                 f"max_learning_rate#{MAX_LEARNING_RATE}",
                 f"dataset_split#{TRAIN_VAL_RATIO}",
@@ -655,7 +756,7 @@ def main():
     for i in range(5):
         try:
             best_model = torch.jit.script(best_model)
-            torch.jit.save(best_model, os.path.join(MODEL_PATH, f"ImageMask-BEST-{TRAINING_DATE}.pt"), _extra_files=metadata)
+            torch.jit.save(best_model, os.path.join(MODEL_PATH, f"Mapping-BEST-{TRAINING_DATE}.pt"), _extra_files=metadata)
             best_model_saved = True
             break
         except:

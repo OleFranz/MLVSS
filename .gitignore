@@ -9,7 +9,10 @@
 /C++/build
 
 # Ignore the datasets
-/Mapping/Datasets
+**Datasets
+
+# Ignore the models
+**Models
 
 # Ignore the training logs
-/Tensorboard
+**Tensorboard
