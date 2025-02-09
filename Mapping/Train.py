@@ -91,6 +91,8 @@ print(timestamp() + "> Cache:", CACHE)
 class custom():
     class RandomHorizontalFlip():
         pass
+    class RandomCrop():
+        pass
 
 # Custom dataset class
 if CACHE:
@@ -156,6 +158,14 @@ if CACHE:
                     if random.uniform(0, 1) < 0.5:
                         image = cv2.flip(image, 1)
                         label = cv2.flip(label, 1)
+                elif isinstance(transform, custom.RandomCrop):
+                    if random.uniform(0, 1) < 0.5:
+                        NewWidth = random.uniform(0.5, 1)
+                        NewHeight = random.uniform(0.5, 1)
+                        X = random.uniform(0, 1 - NewWidth)
+                        Y = random.uniform(0, 1 - NewHeight)
+                        image = cv2.resize(image[round(Y * IMG_HEIGHT):round((Y + NewHeight) * IMG_HEIGHT), round(X * IMG_WIDTH):round((X + NewWidth) * IMG_WIDTH)], (IMG_WIDTH, IMG_HEIGHT))
+                        label = cv2.resize(label[round(Y * IMG_HEIGHT):round((Y + NewHeight) * IMG_HEIGHT), round(X * IMG_WIDTH):round((X + NewWidth) * IMG_WIDTH)], (IMG_WIDTH, IMG_HEIGHT))
                 else:
                     image = transform(image)
                     label = transform(label)
@@ -212,6 +222,14 @@ else:
                     if random.uniform(0, 1) < 0.5:
                         image = cv2.flip(image, 1)
                         label = cv2.flip(label, 1)
+                elif isinstance(transform, custom.RandomCrop):
+                    if random.uniform(0, 1) < 0.5:
+                        NewWidth = random.uniform(0.5, 1)
+                        NewHeight = random.uniform(0.5, 1)
+                        X = random.uniform(0, 1 - NewWidth)
+                        Y = random.uniform(0, 1 - NewHeight)
+                        image = cv2.resize(image[round(Y * IMG_HEIGHT):round((Y + NewHeight) * IMG_HEIGHT), round(X * IMG_WIDTH):round((X + NewWidth) * IMG_WIDTH)], (IMG_WIDTH, IMG_HEIGHT))
+                        label = cv2.resize(label[round(Y * IMG_HEIGHT):round((Y + NewHeight) * IMG_HEIGHT), round(X * IMG_WIDTH):round((X + NewWidth) * IMG_WIDTH)], (IMG_WIDTH, IMG_HEIGHT))
                 else:
                     image = transform(image)
                     label = transform(label)
@@ -412,6 +430,7 @@ def main():
     # Transformations
     train_transform = (
         custom.RandomHorizontalFlip(),
+        custom.RandomCrop(),
         transforms.ToTensor()
     )
 

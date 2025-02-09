@@ -334,7 +334,7 @@ def GetRouteAdvisorPosition(Side="Automatic"):
 
         if pytorch.IsInitialized(Model="RouteAdvisorClassification", Folder="model") == False:
             global Identifier
-            Identifier = pytorch.Initialize(Owner="Glas42", Model="RouteAdvisorClassification", Folder="model")
+            Identifier = pytorch.Initialize(Owner="OleFranz", Model="RouteAdvisorClassification", Folder="model")
             pytorch.Load(Identifier)
         if pytorch.Loaded(Identifier) == False:
             return RightMapTopLeft, RightMapBottomRight, RightArrowTopLeft, RightArrowBottomRight
