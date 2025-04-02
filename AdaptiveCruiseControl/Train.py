@@ -26,8 +26,8 @@ Device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 Epochs = 100
 BatchSize = 32
 OutputCount = 1
-ImageWidth = int(500 / 5)
-ImageHeight = int(1400 / 5)
+ImageWidth = int(500 / 2)
+ImageHeight = int(1400 / 2)
 ColorChannels = 1
 LearningRate = 0.001
 MaxLearningRate = 0.001
@@ -190,9 +190,7 @@ def main():
 
     TrainingTransform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomCrop((round(ImageHeight * random.uniform(0.75, 1)), round(ImageWidth * random.uniform(0.75, 1)))),
-        transforms.Resize((ImageHeight, ImageWidth))
+        transforms.RandomHorizontalFlip()
     ])
 
     ValidationTransform = transforms.Compose([
